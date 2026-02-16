@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16
@@ -14,6 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/scripts:/docker-entrypoint-initdb.d
     restart: unless-stopped
+
   api:
     build:
         context: ./api
@@ -25,6 +24,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - API_SECURITY_TOKEN_SECRET=${API_SECURITY_TOKEN_SECRET}
     depends_on:
       - postgres
     restart: unless-stopped

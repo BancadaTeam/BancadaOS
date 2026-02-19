@@ -6,7 +6,6 @@ import br.com.bancada_os.api.exception.EmailJaCadastradoException;
 import br.com.bancada_os.api.model.Usuario;
 import br.com.bancada_os.api.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

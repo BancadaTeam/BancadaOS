@@ -5,25 +5,49 @@ CREATE TYPE forma_pagamento AS ENUM ('DINHEIRO', 'CREDITO', 'DEBITO', 'PIX');
 CREATE TYPE status_venda AS ENUM ('PENDENTE', 'CONCLUIDA', 'CANCELADA');
 CREATE TYPE status_os AS ENUM ('ORCAMENTO', 'APROVADA', 'EM_ANDAMENTO', 'AGUARDANDO_PECA', 'CONCLUIDA', 'CANCELADA', 'ENTREGUE');
 
+CREATE TABLE empresa(
+    id_empresa BIGSERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    cnpj VARCHAR(20) NOT NULL UNIQUE,
+    endereco TEXT,
+    telefone VARCHAR(20),
+    email VARCHAR(255)
+);
+
 CREATE TABLE usuario(
     id_usuario BIGSERIAL PRIMARY KEY,
+    id_empresa BIGINT NOT NULL,
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
     cargo VARCHAR(50) NOT NULL,
-    ativo BOOLEAN NOT NULL DEFAULT TRUE
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT fk_empresa_usuario
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE categoria(
     id_categoria BIGSERIAL PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL
+    id_empresa BIGINT NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+
+    CONSTRAINT fk_empresa_categoria
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE cliente(
     id_cliente BIGSERIAL PRIMARY KEY,
+    id_empresa BIGINT NOT NULL,
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255),
-    ativo BOOLEAN NOT NULL DEFAULT TRUE
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT fk_empresa_cliente
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE telefone(
@@ -40,10 +64,15 @@ CREATE TABLE telefone(
 CREATE TABLE produto(
     id_produto BIGSERIAL PRIMARY KEY,
     id_categoria BIGINT NOT NULL,
+    id_empresa BIGINT NOT NULL,
     nome VARCHAR(255) NOT NULL,
     valor_compra DECIMAL(10,2) NOT NULL,
     valor_venda DECIMAL(10,2) NOT NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT fk_empresa_produto
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa),
 
     CONSTRAINT fk_categoria
     FOREIGN KEY (id_categoria)
@@ -53,7 +82,12 @@ CREATE TABLE produto(
 CREATE TABLE estoque(
     id_estoque BIGSERIAL PRIMARY KEY,
     id_produto BIGINT NOT NULL UNIQUE,
+    id_empresa BIGINT NOT NULL,
     quantidade BIGINT NOT NULL CHECK(quantidade >= 0),
+
+    CONSTRAINT fk_empresa_estoque
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa),
 
     CONSTRAINT fk_produto_estoque
     FOREIGN KEY (id_produto)
@@ -64,6 +98,7 @@ CREATE TABLE movimentacao_estoque(
     id_movimentacao BIGSERIAL PRIMARY KEY,
     id_produto BIGINT NOT NULL,
     id_usuario BIGINT NOT NULL,
+    id_empresa BIGINT NOT NULL,
     tipo tipo_movimentacao NOT NULL,
     quantidade INT NOT NULL CHECK(quantidade > 0),
     data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,13 +112,18 @@ CREATE TABLE movimentacao_estoque(
 
     CONSTRAINT fk_produto_movimentacao
     FOREIGN KEY (id_produto)
-    REFERENCES produto(id_produto)
+    REFERENCES produto(id_produto),
+
+    CONSTRAINT fk_empresa_movimentacao
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE venda(
     id_venda BIGSERIAL PRIMARY KEY,
     id_usuario BIGINT NOT NULL,
     id_cliente BIGINT,
+    id_empresa BIGINT NOT NULL,
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) NOT NULL,
     forma_pagamento forma_pagamento NOT NULL,
@@ -95,7 +135,11 @@ CREATE TABLE venda(
 
     CONSTRAINT fk_cliente_venda
     FOREIGN KEY (id_cliente)
-    REFERENCES cliente(id_cliente)
+    REFERENCES cliente(id_cliente),
+    
+    CONSTRAINT fk_empresa_venda
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE item_venda(
@@ -118,6 +162,7 @@ CREATE TABLE item_venda(
 CREATE TABLE aparelho(
     id_aparelho BIGSERIAL PRIMARY KEY,
     id_cliente BIGINT NOT NULL,
+    id_empresa BIGINT NOT NULL,
     tipo VARCHAR(255) NOT NULL,
     marca VARCHAR(255),
     modelo VARCHAR(255),
@@ -127,31 +172,46 @@ CREATE TABLE aparelho(
 
     CONSTRAINT fk_cliente_aparelho
     FOREIGN KEY (id_cliente)
-    REFERENCES cliente(id_cliente)
+    REFERENCES cliente(id_cliente),
+
+    CONSTRAINT fk_empresa_aparelho
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE tipo_servico(
     id_tipo_servico BIGSERIAL PRIMARY KEY,
+    id_empresa BIGINT NOT NULL,
     nome VARCHAR(255) NOT NULL,
-    descricao TEXT
+    descricao TEXT,
+
+    CONSTRAINT fk_empresa_tipo_servico
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE servico(
     id_servico BIGSERIAL PRIMARY KEY,
     id_tipo_servico BIGINT NOT NULL,
+    id_empresa BIGINT NOT NULL,
     nome VARCHAR(255) NOT NULL,
     valor_base DECIMAL(10,2) NOT NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_tipo_servico
     FOREIGN KEY (id_tipo_servico)
-    REFERENCES tipo_servico(id_tipo_servico)
+    REFERENCES tipo_servico(id_tipo_servico),
+
+    CONSTRAINT fk_empresa_servico
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE ordem_servico(
     id_os BIGSERIAL PRIMARY KEY,
     id_cliente BIGINT NOT NULL,
     id_aparelho BIGINT NOT NULL,
+    id_empresa BIGINT NOT NULL,
     data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_fechamento TIMESTAMP,
     problema_relato TEXT NOT NULL,
@@ -165,7 +225,11 @@ CREATE TABLE ordem_servico(
 
     CONSTRAINT fk_aparelho_os
     FOREIGN KEY (id_aparelho)
-    REFERENCES aparelho(id_aparelho)
+    REFERENCES aparelho(id_aparelho),
+
+    CONSTRAINT fk_empresa_os
+    FOREIGN KEY (id_empresa)
+    REFERENCES empresa(id_empresa)
 );
 
 CREATE TABLE item_peca_os(
